@@ -3,7 +3,6 @@ package problem.day03
 import common.InputRepo
 import common.readSessionCookie
 import common.solve
-import kotlin.coroutines.EmptyCoroutineContext.fold
 
 fun main(args: Array<String>) {
     val day = 3
