@@ -6,11 +6,12 @@ import io.kotest.matchers.shouldBe
 class Day06Test : FreeSpec({
 
     val sampleInput: List<String> = listOf(
+        "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw",
     )
 
-    val sampleSolutionPart1: Int = -1
+    val sampleSolutionPart1 = 11
 
-    val sampleSolutionPart2: Int = -1
+    val sampleSolutionPart2 = 26
 
     "Solving day 6" - {
         "part 1 for the sample input should return the correct output" {

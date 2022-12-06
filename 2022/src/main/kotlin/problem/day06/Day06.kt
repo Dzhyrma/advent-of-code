@@ -13,9 +13,28 @@ fun main(args: Array<String>) {
 
 
 fun solveDay06Part1(input: List<String>): Int {
-    TODO()
+    return findStartOfPacket(input.first())
 }
 
 fun solveDay06Part2(input: List<String>): Int {
-    TODO()
+    return findStartOfPacket(input.first(), 14)
+}
+
+private fun findStartOfPacket(dataStream: String, packetSize: Int = 4): Int {
+    val charCount = IntArray('z' - 'a' + 1) { 0 }
+    val markerSet = mutableSetOf<Char>()
+    dataStream.forEachIndexed { index, char ->
+        charCount[char - 'a']++
+        markerSet += char
+        if (index >= packetSize) {
+            val removedChar = dataStream[index - packetSize]
+            if (--charCount[removedChar - 'a'] == 0) {
+                markerSet.remove(removedChar)
+            }
+        }
+        if (markerSet.size == packetSize) {
+            return index + 1
+        }
+    }
+    return -1
 }
