@@ -18,7 +18,11 @@ data class RobotCosts(
     val clayRobot: List<Int>,
     val obsidianRobot: List<Int>,
     val geodeRobot: List<Int>,
-)
+) {
+    private val allRobots = listOf(oreRobot, clayRobot, obsidianRobot, geodeRobot)
+
+    val maxRobotsNeededPerMinute = (0 until 4).map { resource -> allRobots.maxOf { it[resource] } }
+}
 
 fun solveDay19Part1(input: List<String>): Int {
     val blueprints = parseBlueprints(input)
@@ -73,6 +77,7 @@ private fun RobotCosts.simulate(
     ) = resourceIndices.maxOf {
         when {
             resources[it] >= robotBlueprint[it] -> 0
+            robots[it] == 0 -> Int.MAX_VALUE
             else -> ceil(((robotBlueprint[it] - resources[it]).toDouble() / robots[it])).toInt()
         }
     }
@@ -86,27 +91,19 @@ private fun RobotCosts.simulate(
             possibilities.add { buildGeodeRobot(n) }
         }
     }
-    if (resources[0] >= obsidianRobot[0] && resources[1] >= obsidianRobot[1]) {
-        if (robots[2] == 0) return buildObsidianRobot(0)
-        possibilities.add { buildObsidianRobot(0) }
-    } else if (robots[1] > 0) {
+    if (robots[2] < maxRobotsNeededPerMinute[2]) {
         val n = estimateMinutesNeededToBuildRobot(obsidianRobot, 0, 1)
         if (n < minutesLeft) {
             possibilities.add { buildObsidianRobot(n) }
         }
     }
-    if (resources[0] >= clayRobot[0]) {
-        if (robots[1] == 0) return buildClayRobot(0)
-        possibilities.add { buildClayRobot(0) }
-    } else {
+    if (robots[1] < maxRobotsNeededPerMinute[1]) {
         val n = estimateMinutesNeededToBuildRobot(clayRobot, 0)
         if (n < minutesLeft) {
             possibilities.add { buildClayRobot(n) }
         }
     }
-    if (resources[0] >= oreRobot[0]) {
-        possibilities.add { buildOreRobot(0) }
-    } else {
+    if (robots[0] < maxRobotsNeededPerMinute[0]) {
         val n = estimateMinutesNeededToBuildRobot(oreRobot, 0)
         if (n < minutesLeft) {
             possibilities.add { buildOreRobot(n) }
