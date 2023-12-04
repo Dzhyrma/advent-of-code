@@ -25,7 +25,6 @@ fun solveDay03Part2(input: List<String>): Int {
             input
                 .findAllGears(numbers)
                 .sumOf {
-                    println("${it.number1.toInt(input)} ${it.number2.toInt(input)}")
                     it.number1.toInt(input) * it.number2.toInt(input)
                 }
         }
