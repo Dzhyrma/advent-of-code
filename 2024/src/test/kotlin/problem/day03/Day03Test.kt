@@ -1,4 +1,4 @@
-package problem.day02
+package problem.day03
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
