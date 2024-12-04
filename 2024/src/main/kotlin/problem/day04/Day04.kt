@@ -24,19 +24,18 @@ fun solveDay04Part1(input: List<String>): Int {
     }
 }
 
-fun solveDay04Part2(input: List<String>): Long {
-    fun isValidMas(str: String) = str == "MAS" || str == "SAM"
+fun solveDay04Part2(input: List<String>): Int {
     return (1 until input.size - 1).sumOf { y ->
-        (1 until input[y].length - 1).sumOf { x ->
-            if (input[y][x] != 'A'
-                || !isValidMas("${input[y - 1][x - 1]}A${input[y + 1][x + 1]}")
-                || !isValidMas("${input[y - 1][x + 1]}A${input[y + 1][x - 1]}")
-            ) 0L else 1L
+        (1 until input[y].length - 1).count { x ->
+            input[y][x] == 'A'
+                    && input[y - 1][x - 1].code + input[y + 1][x + 1].code == M_AND_S
+                    && input[y - 1][x + 1].code + input[y + 1][x - 1].code == M_AND_S
         }
     }
 }
 
 private const val WORD = "XMAS"
+private const val M_AND_S = 'M'.code + 'S'.code
 private val DIRECTIONS = listOf(
     Pair(0, 1),   // Right
     Pair(0, -1),  // Left
