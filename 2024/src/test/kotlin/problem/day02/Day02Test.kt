@@ -18,7 +18,7 @@ class Day02Test : FreeSpec({
 
     val sampleSolutionPart2 = 4
 
-    "Solving day 1" - {
+    "Solving day 2" - {
         "part 1 for the sample input should return the correct output" {
             solveDay02Part1(sampleInput1) shouldBe sampleSolutionPart1
         }
