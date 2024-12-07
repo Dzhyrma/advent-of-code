@@ -13,6 +13,7 @@ fun main(args: Array<String>) {
 
 fun solveDay07Part1(input: List<String>): Long {
     fun evaluateRecursive(numbers: List<Long>, target: Long, index: Int, current: Long): Boolean {
+        if (current > target) return false
         if (index == numbers.size) return current == target
 
         val next = numbers[index]
@@ -28,6 +29,7 @@ fun solveDay07Part1(input: List<String>): Long {
 
 fun solveDay07Part2(input: List<String>): Long {
     fun evaluateRecursive(numbers: List<Long>, target: Long, index: Int, current: Long): Boolean {
+        if (current > target) return false
         if (index == numbers.size) return current == target
 
         val next = numbers[index]
