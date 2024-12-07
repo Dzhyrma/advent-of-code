@@ -12,15 +12,6 @@ fun main(args: Array<String>) {
 }
 
 fun solveDay07Part1(input: List<String>): Long {
-    fun evaluateRecursive(numbers: List<Long>, target: Long, index: Int, current: Long): Boolean {
-        if (current > target) return false
-        if (index == numbers.size) return current == target
-
-        val next = numbers[index]
-        return evaluateRecursive(numbers, target, index + 1, current + next) ||
-            evaluateRecursive(numbers, target, index + 1, current * next)
-    }
-
     return input.sumOf { line ->
         val (target, numbers) = parseInput(line)
         if (evaluateRecursive(numbers, target, 1, numbers[0])) target else 0L
@@ -28,19 +19,9 @@ fun solveDay07Part1(input: List<String>): Long {
 }
 
 fun solveDay07Part2(input: List<String>): Long {
-    fun evaluateRecursive(numbers: List<Long>, target: Long, index: Int, current: Long): Boolean {
-        if (current > target) return false
-        if (index == numbers.size) return current == target
-
-        val next = numbers[index]
-        return evaluateRecursive(numbers, target, index + 1, current + next) ||
-            evaluateRecursive(numbers, target, index + 1, current * next) ||
-            evaluateRecursive(numbers, target, index + 1, "$current$next".toLong())
-    }
-
     return input.sumOf { line ->
         val (target, numbers) = parseInput(line)
-        if (evaluateRecursive(numbers, target, 1, numbers[0])) target else 0L
+        if (evaluateRecursive(numbers, target, 1, numbers[0], true)) target else 0L
     }
 }
 
@@ -49,4 +30,20 @@ private fun parseInput(line: String): Pair<Long, List<Long>> {
     val target = parts[0].toLong()
     val numbers = parts[1].trim().split(" ").map { it.toLong() }
     return target to numbers
+}
+
+fun evaluateRecursive(
+    numbers: List<Long>,
+    target: Long,
+    index: Int,
+    current: Long,
+    withConcatOperation: Boolean = false,
+): Boolean {
+    if (current > target) return false
+    if (index == numbers.size) return current == target
+
+    val next = numbers[index]
+    return evaluateRecursive(numbers, target, index + 1, current + next, withConcatOperation) ||
+        evaluateRecursive(numbers, target, index + 1, current * next, withConcatOperation) ||
+        (withConcatOperation && evaluateRecursive(numbers, target, index + 1, "$current$next".toLong(), true))
 }
