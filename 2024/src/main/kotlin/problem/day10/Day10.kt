@@ -4,6 +4,8 @@ import common.InputRepo
 import common.readSessionCookie
 import common.solve
 
+typealias Pos = Pair<Int, Int>
+
 fun main(args: Array<String>) {
     val day = 10
     val input = InputRepo(args.readSessionCookie()).get(day = day)
@@ -13,7 +15,7 @@ fun main(args: Array<String>) {
 fun solveDay10Part1(input: List<String>): Int {
     return input.mapIndexed { rowIndex, row ->
         row.mapIndexed { colIndex, char ->
-            if (char == '0') input.dfs(rowIndex, colIndex, '0', setOf()).toSet().size else 0
+            if (char == '0') input.dfs(rowIndex, colIndex).toSet().size else 0
         }.sum()
     }.sum()
 }
@@ -21,23 +23,23 @@ fun solveDay10Part1(input: List<String>): Int {
 fun solveDay10Part2(input: List<String>): Int {
     return input.mapIndexed { rowIndex, row ->
         row.mapIndexed { colIndex, char ->
-            if (char == '0') input.dfs(rowIndex, colIndex, '0', setOf()).size else 0
+            if (char == '0') input.dfs(rowIndex, colIndex).size else 0
         }.sum()
     }.sum()
 }
 
-fun List<String>.dfs(row: Int, col: Int, targetHeight: Char, visited: Set<Pair<Int, Int>>): List<Pair<Int, Int>> {
+private fun List<String>.dfs(row: Int, col: Int, target: Char = '0', visited: Set<Pos> = setOf()): List<Pos> {
     return when {
         row !in this.indices || col !in this[row].indices ||
-            (row to col) in visited || this[row][col] != targetHeight -> emptyList()
-        targetHeight == '9' -> listOf(row to col)
+            (row to col) in visited || this[row][col] != target -> emptyList()
+        target == '9' -> listOf(row to col)
         else -> {
             val newVisited = visited + (row to col)
-            val nextHeight = targetHeight + 1
-            return dfs(row - 1, col, nextHeight, newVisited) +
-                dfs(row + 1, col, nextHeight, newVisited) +
-                dfs(row, col - 1, nextHeight, newVisited) +
-                dfs(row, col + 1, nextHeight, newVisited)
+            val next = target + 1
+            return dfs(row - 1, col, next, newVisited) +
+                dfs(row + 1, col, next, newVisited) +
+                dfs(row, col - 1, next, newVisited) +
+                dfs(row, col + 1, next, newVisited)
         }
     }
 }
