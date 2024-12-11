@@ -3,6 +3,7 @@ package problem.day11
 import common.InputRepo
 import common.readSessionCookie
 import common.solve
+import java.math.BigInteger
 
 fun main(args: Array<String>) {
     val day = 11
@@ -11,9 +12,34 @@ fun main(args: Array<String>) {
 }
 
 fun solveDay11Part1(input: List<String>): Long {
-    return TODO()
+    return input[0].split(" ").sumOf { evolveStones(it, 25) }
 }
 
 fun solveDay11Part2(input: List<String>): Long {
-    return TODO()
+    return input[0].split(" ").sumOf { evolveStones(it, 75) }
+}
+
+private fun evolveStones(
+    stone: String,
+    blinksLeft: Int,
+    memory: MutableMap<String, MutableMap<Int, Long>> = mutableMapOf<String, MutableMap<Int, Long>>().withDefault { mutableMapOf() },
+): Long {
+    if (blinksLeft == 0) return 1L
+    val stoneMemo = memory.getValue(stone)
+    stoneMemo[blinksLeft]?.also { return it }
+    val result = when {
+        stone == "0" -> evolveStones("1", blinksLeft - 1, memory)
+        stone.length % 2 == 0 -> {
+            val mid = stone.length / 2
+            val left = stone.substring(0, mid)
+            val right = stone.substring(mid)
+            evolveStones(left, blinksLeft - 1, memory) + evolveStones(BigInteger(right).toString(), blinksLeft - 1, memory)
+        }
+        else -> {
+            evolveStones((BigInteger(stone) * BigInteger.valueOf(2024)).toString(), blinksLeft - 1, memory)
+        }
+    }
+    stoneMemo[blinksLeft] = result
+    memory[stone] = stoneMemo
+    return result
 }
