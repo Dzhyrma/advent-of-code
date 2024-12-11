@@ -8,15 +8,16 @@ import java.math.BigInteger
 fun main(args: Array<String>) {
     val day = 11
     val input = InputRepo(args.readSessionCookie()).get(day = day)
+
     solve(day, input, ::solveDay11Part1, ::solveDay11Part2)
 }
 
 fun solveDay11Part1(input: List<String>): Long {
-    return input[0].split(" ").sumOf { evolveStones(it, 25) }
+    return input[0].split(" ").sumOf { evolveStones(it, 25, MEMO) }
 }
 
 fun solveDay11Part2(input: List<String>): Long {
-    return input[0].split(" ").sumOf { evolveStones(it, 75) }
+    return input[0].split(" ").sumOf { evolveStones(it, 75, MEMO) }
 }
 
 private fun evolveStones(
@@ -33,7 +34,8 @@ private fun evolveStones(
             val mid = stone.length / 2
             val left = stone.substring(0, mid)
             val right = stone.substring(mid)
-            evolveStones(left, blinksLeft - 1, memory) + evolveStones(BigInteger(right).toString(), blinksLeft - 1, memory)
+            evolveStones(left, blinksLeft - 1, memory) +
+                evolveStones(BigInteger(right).toString(), blinksLeft - 1, memory)
         }
         else -> {
             evolveStones((BigInteger(stone) * BigInteger.valueOf(2024)).toString(), blinksLeft - 1, memory)
@@ -43,3 +45,5 @@ private fun evolveStones(
     memory[stone] = stoneMemo
     return result
 }
+
+private val MEMO = mutableMapOf<String, MutableMap<Int, Long>>().withDefault { mutableMapOf() }
