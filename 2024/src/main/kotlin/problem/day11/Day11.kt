@@ -23,7 +23,7 @@ fun solveDay11Part2(input: List<String>): Long {
 private fun evolveStones(
     stone: String,
     blinksLeft: Int,
-    memory: MutableMap<String, MutableMap<Int, Long>> = mutableMapOf<String, MutableMap<Int, Long>>().withDefault { mutableMapOf() },
+    memory: MutableMap<String, MutableMap<Int, Long>>,
 ): Long {
     if (blinksLeft == 0) return 1L
     val stoneMemo = memory.getValue(stone)
@@ -38,7 +38,7 @@ private fun evolveStones(
                 evolveStones(BigInteger(right).toString(), blinksLeft - 1, memory)
         }
         else -> {
-            evolveStones((BigInteger(stone) * BigInteger.valueOf(2024)).toString(), blinksLeft - 1, memory)
+            evolveStones((BigInteger(stone) * BI_2024).toString(), blinksLeft - 1, memory)
         }
     }
     stoneMemo[blinksLeft] = result
@@ -46,4 +46,5 @@ private fun evolveStones(
     return result
 }
 
+private val BI_2024 = BigInteger.valueOf(2024)
 private val MEMO = mutableMapOf<String, MutableMap<Int, Long>>().withDefault { mutableMapOf() }

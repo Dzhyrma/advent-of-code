@@ -31,7 +31,6 @@ application {
     mainClass.set("common/App")
     applicationDefaultJvmArgs = listOfNotNull(
         "-Dday=${System.getProperty("day")}",
-        sessionCookie?.let { "-DsessionCookie=$it" }
+        sessionCookie?.let { "-DsessionCookie=$it" },
     )
 }
-
