@@ -30,10 +30,11 @@ private fun List<String>.calculateMinimumTokens(adjust: Boolean = false): Long =
     }
 
 private fun findSolution(dxA: Int, dyA: Int, dxB: Int, dyB: Int, prizeX: Long, prizeY: Long): Long {
-    val a = (dxB * prizeY - dyB * prizeX) / (dyA * dxB - dxA * dyB)
-    val b = (prizeX - a * dxA) / dxB
-    if ((prizeX - a * dxA) % dxB == 0L && (dxB * prizeY - dyB * prizeX) % (dyA * dxB - dxA * dyB) == 0L) {
-        return 3 * a + b
-    }
-    return 0
+    val aNumerator = (dxB * prizeY - dyB * prizeX)
+    val aDenominator = (dyA * dxB - dxA * dyB)
+    if (aNumerator % aDenominator != 0L) return 0
+    val a = aNumerator / aDenominator
+    val bNumerator = prizeX - a * dxA
+    if (bNumerator % dxB != 0L) return 0
+    return 3 * a + bNumerator / dxB
 }
