@@ -28,6 +28,7 @@ fun solveDay17Part2(input: List<String>): Long {
     }
 }
 
+// this helps only with analysed input
 private fun find_a(program: List<Int>, a: Long = 0): Long? {
     if (program.isEmpty()) return a
     for (i in 0..7L) {
