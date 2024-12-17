@@ -19,7 +19,7 @@ fun solveDay17Part1(input: List<String>): String {
 
 fun solveDay17Part2(input: List<String>): Long {
     val program = input[4].split(": ")[1].split(",").map { it.toInt() }
-    var a = find_a(program) ?: 0
+    var a = findA(program) ?: 0
     // var a = 0b101_110_001_001_101_011_000_000_000_000_000_000_000_000_000_000
 
     while (true) {
@@ -29,14 +29,14 @@ fun solveDay17Part2(input: List<String>): Long {
 }
 
 // this helps only with analysed input
-private fun find_a(program: List<Int>, a: Long = 0): Long? {
+private fun findA(program: List<Int>, a: Long = 0): Long? {
     if (program.isEmpty()) return a
     for (i in 0..7L) {
         val newA = (a shl 3) or i
         val b = i xor 1
         val d = (b xor (newA shr b.toInt()) xor 4) and 7
         if (d.toInt() == program.last()) {
-            val result = find_a(program.dropLast(1), newA)
+            val result = findA(program.dropLast(1), newA)
             if (result != null) return result
         }
     }
