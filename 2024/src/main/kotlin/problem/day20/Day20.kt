@@ -71,7 +71,7 @@ private fun List<String>.countCheats(save: Int, cheats: Int): Int {
 
     var counter = 0
     grid.forEachIndexed { y, row ->
-        row.forEachIndexed { x, c ->
+        row.forEachIndexed { x, _ ->
             if (dToEnd[y][x] != Int.MAX_VALUE) {
                 for (cy in (max(0, y - cheats)..min(rows - 1, y + cheats))) {
                     for (cx in (max(0, x - cheats)..min(cols - 1, x + cheats))) {
