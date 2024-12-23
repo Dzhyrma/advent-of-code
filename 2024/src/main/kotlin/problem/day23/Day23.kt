@@ -36,8 +36,32 @@ private fun Map<String, Set<String>>.countSetsWithT() = keys
     .filter { it.size == 3 }
     .count { isConnected(it) }
 
-private fun Map<String, Set<String>>.findLanPartyPassword() = keys
-    .fold(setOf<String>()) { acc, comp ->
-        val candidateGroup = (acc + comp).toSet()
-        if (isConnected((acc + comp).toSet())) candidateGroup else acc
-    }.sorted().joinToString(",")
+private fun Map<String, Set<String>>.findLanPartyPassword(): String {
+    val cliques = mutableListOf<Set<String>>()
+    bronKerbosch(emptySet(), keys.toMutableSet(), mutableSetOf(), cliques)
+    return cliques.maxBy { it.size }.sorted().joinToString(",")
+}
+
+private fun Map<String, Set<String>>.bronKerbosch(
+    r: Set<String>,
+    p: MutableSet<String>,
+    x: MutableSet<String>,
+    cliques: MutableList<Set<String>>,
+) {
+    if (p.isEmpty() && x.isEmpty()) {
+        cliques.add(r)
+        return
+    }
+    val pivot = (p + x).first()
+    val nonNeighbors = p - (this.getValue(pivot))
+    nonNeighbors.forEach { v ->
+        bronKerbosch(
+            r = r + v,
+            p = p.intersect(this.getValue(v)).toMutableSet(),
+            x = x.intersect(this.getValue(v)).toMutableSet(),
+            cliques = cliques,
+        )
+        p -= v
+        x += v
+    }
+}
