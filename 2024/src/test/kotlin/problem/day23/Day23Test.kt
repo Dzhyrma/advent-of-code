@@ -14,7 +14,7 @@ class Day23Test : FreeSpec({
         "ka-de",
     )
 
-    val sampleSolutionPart1 = -1L
+    val sampleSolutionPart1 = 3
 
     val sampleSolutionPart2 = "co,de,ka,ta"
 
