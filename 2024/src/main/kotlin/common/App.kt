@@ -46,6 +46,7 @@ fun main() {
         22 -> problem.day22.main(arrayOf(sessionCookie))
         23 -> problem.day23.main(arrayOf(sessionCookie))
         24 -> problem.day24.main(arrayOf(sessionCookie))
+        25 -> problem.day25.main(arrayOf(sessionCookie))
         else -> println("Invalid day.")
     }
 }

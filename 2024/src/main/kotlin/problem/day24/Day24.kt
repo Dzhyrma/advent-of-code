@@ -17,8 +17,8 @@ fun solveDay24Part1(input: List<String>): String {
 }
 
 fun solveDay24Part2(input: List<String>): String {
-    println(convertToDot(input))
-    printnBinaryValues(input)
+    // println(convertToDot(input))
+    // printnBinaryValues(input)
     val result = listOf("z06", "ksv", "nbd", "kbs", "z20", "tqq", "z39", "ckb").sorted().joinToString(separator = ",")
     return result
 }
@@ -108,25 +108,13 @@ fun convertToDot(inputLines: List<String>): String {
             continue
         }
         if ("->" in trimmedLine) {
-            val parts = trimmedLine.split(" -> ")
-            val gateOperation = parts[0].split(" ")
-            val outputWire = parts[1]
+            val (gateOperation, outputWire) = trimmedLine.split(" -> ")
+            val (input1, operation, input2) = gateOperation.split(" ")
 
-            if (gateOperation.size == 3) {
-                val input1 = gateOperation[0]
-                val operation = gateOperation[1]
-                val input2 = gateOperation[2]
-
-                // Add edges with labels
-                dotOutput.appendLine("  \"$outputWire $operation\" [label=$operation];")
-                dotOutput.appendLine("  \"$input1\" -> \"$outputWire $operation\";")
-                dotOutput.appendLine("  \"$input2\" -> \"$outputWire $operation\";")
-                dotOutput.appendLine("  \"$outputWire $operation\" -> \"$outputWire\";")
-            } else {
-                // Handle cases where the gate has a single input
-                val input1 = gateOperation[0]
-                dotOutput.appendLine("  \"$input1\" -> \"$outputWire\";")
-            }
+            dotOutput.appendLine("  \"$outputWire $operation\" [label=$operation];")
+            dotOutput.appendLine("  \"$input1\" -> \"$outputWire $operation\";")
+            dotOutput.appendLine("  \"$input2\" -> \"$outputWire $operation\";")
+            dotOutput.appendLine("  \"$outputWire $operation\" -> \"$outputWire\";")
         }
     }
 

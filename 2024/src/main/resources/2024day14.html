@@ -35,6 +35,7 @@
 <body>
 <h1>X-Mas Tree Finder</h1>
 <p>Time range: <input id="time_start" value="0"/> to <input id="time_end" value="10000"/></p>
+<p>Time step: <input id="time_step" value="1"/></p>
 <p>Time: <span id="time">0</span> seconds</p>
 <button onclick="startSimulation()">Start Simulation</button>
 <div id="grid" class="grid"></div>
@@ -548,7 +549,7 @@
     ];
 
     // Parse robot strings into objects
-    const robots = robotStrings.map(str => {
+    let robots = robotStrings.map(str => {
         const [position, velocity] = str.split(" ");
         const [px, py] = position.slice(2).split(",").map(Number);
         const [vx, vy] = velocity.slice(2).split(",").map(Number);
@@ -557,6 +558,7 @@
 
     let time = document.getElementById('time_start').value;
     let timeEnd = document.getElementById('time_end').value;
+    let timeStep = document.getElementById('time_step').value;
     const gridElement = document.getElementById('grid');
     const timeElement = document.getElementById('time');
 
@@ -602,8 +604,15 @@
 
     // Start the simulation
     function startSimulation() {
+        robots = robotStrings.map(str => {
+            const [position, velocity] = str.split(" ");
+            const [px, py] = position.slice(2).split(",").map(Number);
+            const [vx, vy] = velocity.slice(2).split(",").map(Number);
+            return { x: px, y: py, vx, vy };
+        });
         time = Number(document.getElementById('time_start').value);
         timeEnd = Number(document.getElementById('time_end').value);
+        timeStep = Number(document.getElementById('time_step').value);
         moveRobotsN(time);
         const interval = setInterval(() => {
             if (time >= timeEnd) {
@@ -611,9 +620,9 @@
                 alert('Simulation complete!');
                 return;
             }
-            moveRobots();
+            moveRobots(timeStep);
             updateGrid();
-            time++;
+            time+=timeStep;
             timeElement.textContent = time;
         }, 200); // Update every 200ms
     }
