@@ -1,0 +1,42 @@
+package problem.day07
+
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.shouldBe
+
+class Day07Test :
+    FreeSpec({
+
+        val sampleInput1: List<String> =
+            listOf(
+                ".......S.......",
+                "...............",
+                ".......^.......",
+                "...............",
+                "......^.^......",
+                "...............",
+                ".....^.^.^.....",
+                "...............",
+                "....^.^...^....",
+                "...............",
+                "...^.^...^.^...",
+                "...............",
+                "..^...^.....^..",
+                "...............",
+                ".^.^.^.^.^...^.",
+                "...............",
+            )
+
+        val sampleSolutionPart1 = 21
+
+        val sampleSolutionPart2 = 40
+
+        "Solving day 7" - {
+            "part 1 for the sample input should return the correct output" {
+                solveDay07Part1(sampleInput1) shouldBe sampleSolutionPart1
+            }
+
+            "part 2 for the sample input should return the correct output" {
+                solveDay07Part2(sampleInput1) shouldBe sampleSolutionPart2
+            }
+        }
+    })
