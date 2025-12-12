@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forklift Warehouse Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+
+        .stats span {
+            margin: 0 15px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .warehouse-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #warehouse {
+            position: relative;
+            display: inline-block;
+            background: #2c3e50;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .grid {
+            display: grid;
+            gap: 2px;
+            position: relative;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cell.floor {
+            background: #34495e;
+        }
+
+        .cell.roll {
+            background: #e74c3c;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell.roll::before {
+            content: '📦';
+            font-size: 28px;
+            animation: bob 2s ease-in-out infinite;
+        }
+
+        @keyframes bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .forklift {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.15s linear;
+            z-index: 100;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+        }
+
+        .forklift.carrying::after {
+            content: '📦';
+            position: absolute;
+            font-size: 20px;
+            top: -15px;
+            animation: carryBob 0.3s ease-in-out infinite;
+        }
+
+        @keyframes carryBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
+        .cell.removing {
+            animation: pickUp 0.5s ease-out forwards;
+        }
+
+        @keyframes pickUp {
+            0% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(0.8) translateY(-10px);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(0) translateY(-20px);
+                opacity: 0;
+            }
+        }
+
+        .celebration {
+            position: fixed;
+            font-size: 40px;
+            pointer-events: none;
+            animation: celebrate 2s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes celebrate {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 Forklift Warehouse Simulator 🚜</h1>
+        <div class="stats">
+            <span>Iteration: <span id="iteration">0</span>/<span id="totalIterations">0</span></span>
+            <span>Rolls Collected: <span id="collected">0</span></span>
+            <span>Total Rolls: <span id="total">0</span></span>
+            <span>Moves: <span id="moves">0</span></span>
+        </div>
+        <div class="warehouse-wrapper">
+            <div id="warehouse">
+                <div class="grid" id="grid"></div>
+                <div class="forklift" id="forklift">🚜</div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="startBtn" onclick="startSimulation()">Start Simulation</button>
+            <button id="pauseBtn" onclick="pauseSimulation()" disabled>Pause</button>
+            <button id="resetBtn" onclick="resetSimulation()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const gridData = [
+            "..@@.@@@@.",
+            "@@@.@.@.@@",
+            "@@@@@.@.@@",
+            "@.@@@@..@.",
+            "@@.@@@@.@@",
+            ".@@@@@@@.@",
+            ".@.@.@.@@@",
+            "@.@@@.@@@@",
+            ".@@@@@@@@.",
+            "@.@.@@@.@."
+        ];
+
+        // Direction offsets for 8 neighbors (like in Day04.kt)
+        const DX = [-1, 0, 1, -1, 1, -1, 0, 1];
+        const DY = [-1, -1, -1, 0, 0, 1, 1, 1];
+
+        let grid = [];
+        let forklift = { x: 0, y: 0 };
+        let collected = 0;
+        let totalRolls = 0;
+        let moves = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let animationSpeed = 50;
+        let currentIteration = 0;
+        let totalIterations = 0;
+
+        function initializeGrid() {
+            grid = gridData.map(row => row.split(''));
+            totalRolls = grid.flat().filter(cell => cell === '@').length;
+            collected = 0;
+            moves = 0;
+            currentIteration = 0;
+            totalIterations = gridData.length; // repeatTimes = input.size (Part 2)
+            forklift = { x: 0, y: 0 };
+            renderGrid();
+            updateStats();
+        }
+
+        function renderGrid() {
+            const gridElement = document.getElementById('grid');
+            const rows = grid.length;
+            const cols = grid[0].length;
+
+            gridElement.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+            gridElement.style.gridTemplateRows = `repeat(${rows}, 40px)`;
+            gridElement.innerHTML = '';
+
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${x}-${y}`;
+
+                    if (grid[y][x] === '@') {
+                        cell.classList.add('roll');
+                    } else {
+                        cell.classList.add('floor');
+                    }
+
+                    gridElement.appendChild(cell);
+                }
+            }
+
+            updateForkliftPosition();
+        }
+
+        function updateForkliftPosition() {
+            const forkliftElement = document.getElementById('forklift');
+            const padding = 10;
+            const cellSize = 42; // 40px + 2px gap
+
+            forkliftElement.style.left = `${padding + forklift.x * cellSize}px`;
+            forkliftElement.style.top = `${padding + forklift.y * cellSize}px`;
+        }
+
+        function moveForklift(newX, newY) {
+            forklift.x = newX;
+            forklift.y = newY;
+            moves++;
+            updateForkliftPosition();
+            updateStats();
+        }
+
+        function removeRoll(x, y) {
+            if (grid[y][x] === '@') {
+                const cell = document.getElementById(`cell-${x}-${y}`);
+                const forkliftElement = document.getElementById('forklift');
+
+                // Animate removal
+                cell.classList.add('removing');
+                forkliftElement.classList.add('carrying');
+
+                setTimeout(() => {
+                    grid[y][x] = '.';
+                    cell.classList.remove('roll', 'removing');
+                    cell.classList.add('floor');
+                    collected++;
+                    updateStats();
+
+                    // Show celebration
+                    createCelebration(x, y);
+
+                    setTimeout(() => {
+                        forkliftElement.classList.remove('carrying');
+                    }, 200);
+                }, 200);
+            }
+        }
+
+        function createCelebration(x, y) {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.textContent = '✨';
+            celebration.style.left = `${window.innerWidth / 2 + (x - 5) * 42}px`;
+            celebration.style.top = `${window.innerHeight / 2 + (y - 5) * 42}px`;
+            document.body.appendChild(celebration);
+
+            setTimeout(() => celebration.remove(), 2000);
+        }
+
+        function updateStats() {
+            document.getElementById('iteration').textContent = currentIteration;
+            document.getElementById('totalIterations').textContent = totalIterations;
+            document.getElementById('collected').textContent = collected;
+            document.getElementById('total').textContent = totalRolls;
+            document.getElementById('moves').textContent = moves;
+        }
+
+        // Count neighboring paper rolls (matches Kotlin logic)
+        function countNeighboringRolls(x, y) {
+            let count = 0;
+            for (let dir = 0; dir < DX.length; dir++) {
+                const nx = x + DX[dir];
+                const ny = y + DY[dir];
+                if (ny >= 0 && ny < grid.length && nx >= 0 && nx < grid[ny].length && grid[ny][nx] === '@') {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        // Find all rolls that can be picked up (have < 4 neighbors)
+        function findPickableRolls() {
+            const pickable = [];
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === '@') {
+                        const neighborCount = countNeighboringRolls(x, y);
+                        if (neighborCount < 4) {
+                            pickable.push({ x, y });
+                        }
+                    }
+                }
+            }
+            return pickable;
+        }
+
+        async function simulateForkliftMovement() {
+            // Simulate the logic from solveDay04Part2
+            for (let iteration = 0; iteration < totalIterations && !isPaused; iteration++) {
+                currentIteration = iteration + 1;
+                updateStats(); // Update iteration display
+
+                // Find all pickable rolls in this iteration (count < 4)
+                const pickableRolls = findPickableRolls();
+
+                if (pickableRolls.length === 0) {
+                    // No more rolls to pick up
+                    break;
+                }
+
+                // Move forklift to each pickable roll and collect it
+                for (const roll of pickableRolls) {
+                    if (!isRunning || isPaused) return;
+
+                    // Move to the roll
+                    await sleep(animationSpeed);
+                    moveForklift(roll.x, roll.y);
+
+                    // Pick it up
+                    removeRoll(roll.x, roll.y);
+                    await sleep(animationSpeed * 3);
+                }
+
+                // Small pause between iterations
+                if (iteration < totalIterations - 1 && pickableRolls.length > 0) {
+                    await sleep(animationSpeed * 2);
+                }
+            }
+
+            if (!isPaused) {
+                isRunning = false;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+
+                setTimeout(() => {
+                    alert(`🎉 Simulation complete!\n${collected} rolls collected in ${currentIteration} iterations!`);
+                }, 500);
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function startSimulation() {
+            if (!isRunning) {
+                isRunning = true;
+                isPaused = false;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = false;
+                simulateForkliftMovement();
+            } else if (isPaused) {
+                isPaused = false;
+                document.getElementById('startBtn').textContent = 'Start Simulation';
+                document.getElementById('pauseBtn').disabled = false;
+                simulateForkliftMovement();
+            }
+        }
+
+        function pauseSimulation() {
+            isPaused = true;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = 'Resume';
+            document.getElementById('pauseBtn').disabled = true;
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            isPaused = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = 'Start Simulation';
+            document.getElementById('pauseBtn').disabled = true;
+            initializeGrid();
+        }
+
+        // Initialize on load
+        initializeGrid();
+    </script>
+</body>
+</html>

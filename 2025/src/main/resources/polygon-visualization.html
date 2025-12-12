@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polygon Visualization - Day 9</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 150px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .canvas-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 20px;
+        }
+
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            display: block;
+        }
+
+        .info {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            max-width: 800px;
+        }
+
+        .info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔷 Polygon Visualization - Advent of Code 2025 Day 9 🔷</h1>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="zoom">Zoom</label>
+            <input type="range" id="zoom" min="0.1" max="3" step="0.1" value="1">
+            <span id="zoomValue">1.0x</span>
+        </div>
+        <div class="control-group">
+            <label for="lineWidth">Line Width</label>
+            <input type="range" id="lineWidth" min="1" max="10" step="1" value="2">
+            <span id="lineWidthValue">2</span>
+        </div>
+        <button id="resetView">Reset View</button>
+        <button id="toggleFill">Toggle Fill</button>
+        <button id="toggleGrid">Toggle Grid</button>
+        <button id="togglePoints">Toggle Points</button>
+        <button id="toggleRect">Toggle Rectangle</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas" width="1000" height="800"></canvas>
+    </div>
+
+    <div class="info">
+        <h3>Polygon Information</h3>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="verticesCount">0</div>
+                <div class="stat-label">Vertices</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="edgesCount">0</div>
+                <div class="stat-label">Edges</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="boundsWidth">0</div>
+                <div class="stat-label">Width</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="boundsHeight">0</div>
+                <div class="stat-label">Height</div>
+            </div>
+        </div>
+        <p style="margin-top: 15px;">
+            This visualization shows the rectilinear polygon from your input.
+            Use the controls to zoom, pan (drag with mouse), and customize the view.
+            The polygon consists of only horizontal and vertical edges.
+            <br><br>
+            <strong>Highlighted Rectangle:</strong> The golden/orange rectangle shows the area between coordinates
+            (5578, 67676) and (94876, 50058), which represents a potential largest rectangle that fits inside the polygon.
+        </p>
+    </div>
+
+    <script>
+        // Parse the input data
+        const inputData = `98011,50062
+98011,51288
+98335,51288
+98335,52505
+98153,52505
+98153,53716
+97968,53716
+97968,54909
+97654,54909
+97654,56092
+97342,56092
+97342,57324
+97397,57324
+97397,58450
+96795,58450
+96795,59789
+97321,59789
+97321,60954
+96927,60954
+96927,62054
+96308,62054
+96308,63226
+95997,63226
+95997,64435
+95798,64435
+95798,65654
+95602,65654
+95602,66752
+95051,66752
+95051,67960
+94791,67960
+94791,68975
+94059,68975
+94059,70165
+93736,70165
+93736,70974
+92618,70974
+92618,72173
+92312,72173
+92312,73216
+91698,73216
+91698,74516
+91522,74516
+91522,75576
+90913,75576
+90913,76641
+90309,76641
+90309,77404
+89263,77404
+89263,78487
+88688,78487
+88688,79611
+88151,79611
+88151,80630
+87465,80630
+87465,81295
+86358,81295
+86358,81900
+85216,81900
+85216,83326
+84967,83326
+84967,84323
+84233,84323
+84233,84642
+82844,84642
+82844,85411
+81908,85411
+81908,86234
+81023,86234
+81023,86933
+80034,86933
+80034,88085
+79400,88085
+79400,88749
+78376,88749
+78376,89278
+77262,89278
+77262,90474
+76598,90474
+76598,90461
+75146,90461
+75146,91525
+74371,91525
+74371,91950
+73212,91950
+73212,92526
+72143,92526
+72143,93266
+71153,93266
+71153,93459
+69899,93459
+69899,94032
+68827,94032
+68827,95022
+67915,95022
+67915,94660
+66473,94660
+66473,95072
+65340,95072
+65340,96153
+64414,96153
+64414,96064
+63115,96064
+63115,96058
+61860,96058
+61860,96590
+60747,96590
+60747,97451
+59686,97451
+59686,97222
+58399,97222
+58399,97342
+57189,97342
+57189,97743
+56017,97743
+56017,97317
+54749,97317
+54749,98128
+53601,98128
+53601,98202
+52381,98202
+52381,98133
+51156,98133
+51156,97869
+49937,97869
+49937,98106
+48717,98106
+48717,97786
+47513,97786
+47513,98163
+46268,98163
+46268,97957
+45059,97957
+45059,97678
+43864,97678
+43864,97463
+42665,97463
+42665,96997
+41512,96997
+41512,97373
+40199,97373
+40199,96779
+39080,96779
+39080,96504
+37894,96504
+37894,96508
+36626,96508
+36626,95919
+35526,95919
+35526,95636
+34334,95636
+34334,95039
+33252,95039
+33252,94785
+32042,94785
+32042,94314
+30914,94314
+30914,93477
+29954,93477
+29954,92712
+28979,92712
+28979,92826
+27558,92826
+27558,91569
+26855,91569
+26855,91658
+25403,91658
+25403,90431
+24725,90431
+24725,90148
+23464,90148
+23464,89555
+22391,89555
+22391,88298
+21799,88298
+21799,88218
+20336,88218
+20336,86777
+19931,86777
+19931,86701
+18409,86701
+18409,85243
+18074,85243
+18074,84508
+17111,84508
+17111,84110
+15800,84110
+15800,83295
+14881,83295
+14881,82290
+14164,82290
+14164,80924
+13881,80924
+13881,80418
+12594,80418
+12594,79629
+11618,79629
+11618,78467
+11125,78467
+11125,77260
+10723,77260
+10723,76514
+9654,76514
+9654,75397
+9134,75397
+9134,74226
+8721,74226
+8721,73240
+7998,73240
+7998,72225
+7315,72225
+7315,70956
+7135,70956
+7135,70020
+6275,70020
+6275,68808
+6011,68808
+6011,67676
+5578,67676
+5578,66605
+4982,66605
+4982,65351
+4894,65351
+4894,64226
+4447,64226
+4447,63199
+3639,63199
+3639,61872
+3896,61872
+3896,60768
+3315,60768
+3315,59519
+3365,59519
+3365,58388
+2840,58388
+2840,57217
+2468,57217
+2468,56000
+2386,56000
+2386,54772
+2448,54772
+2448,53571
+2279,53571
+2279,52384
+1732,52384
+1732,51157
+1840,51157
+1840,50058
+94876,50058
+94876,48734
+2512,48734
+2512,47516
+2264,47516
+2264,46310
+2371,46310
+2371,45034
+1793,45034
+1793,43885
+2487,43885
+2487,42698
+2752,42698
+2752,41512
+2999,41512
+2999,40180
+2531,40180
+2531,39088
+3258,39088
+3258,37967
+3776,37967
+3776,36616
+3456,36616
+3456,35518
+4056,35518
+4056,34543
+4974,34543
+4974,33244
+4939,33244
+4939,32107
+5375,32107
+5375,31143
+6216,31143
+6216,30095
+6829,30095
+6829,28702
+6725,28702
+6725,27574
+7206,27574
+7206,26658
+8076,26658
+8076,25399
+8335,25399
+8335,24509
+9223,24509
+9223,23381
+9725,23381
+9725,22379
+10427,22379
+10427,21439
+11211,21439
+11211,20656
+12194,20656
+12194,19898
+13182,19898
+13182,18634
+13560,18634
+13560,17765
+14415,17765
+14415,16779
+15143,16779
+15143,15845
+15935,15845
+15935,15391
+17188,15391
+17188,14095
+17647,14095
+17647,13511
+18758,13511
+18758,12485
+19492,12485
+19492,12119
+20757,12119
+20757,10875
+21349,10875
+21349,10464
+22559,10464
+22559,10192
+23839,10192
+23839,8976
+24504,8976
+24504,8361
+25562,8361
+25562,7588
+26532,7588
+26532,7443
+27841,7443
+27841,6615
+28789,6615
+28789,6329
+30003,6329
+30003,5973
+31175,5973
+31175,5770
+32399,5770
+32399,4537
+33230,4537
+33230,4156
+34397,4156
+34397,4241
+35709,4241
+35709,3954
+36890,3954
+36890,3359
+37989,3359
+37989,3258
+39218,3258
+39218,3219
+40450,3219
+40450,2365
+41526,2365
+41526,2307
+42757,2307
+42757,2679
+44036,2679
+44036,1849
+45167,1849
+45167,1871
+46398,1871
+46398,2011
+47629,2011
+47629,2262
+48852,2262
+48852,1547
+50063,1547
+50063,1645
+51288,1645
+51288,2513
+52470,2513
+52470,1788
+53735,1788
+53735,2140
+54930,2140
+54930,2343
+56132,2343
+56132,2271
+57375,2271
+57375,2527
+58572,2527
+58572,3176
+59686,3176
+59686,3346
+60890,3346
+60890,3608
+62076,3608
+62076,3759
+63296,3759
+63296,3746
+64578,3746
+64578,4403
+65652,4403
+65652,5119
+66689,5119
+66689,5081
+68011,5081
+68011,6163
+68879,6163
+68879,6860
+69889,6860
+69889,7013
+71155,7013
+71155,7816
+72105,7816
+72105,7677
+73563,7677
+73563,8925
+74251,8925
+74251,9655
+75220,9655
+75220,10236
+76280,10236
+76280,10944
+77259,10944
+77259,11597
+78276,11597
+78276,11928
+79549,11928
+79549,12821
+80396,12821
+80396,13627
+81308,13627
+81308,14400
+82247,14400
+82247,15297
+83074,15297
+83074,15984
+84104,15984
+84104,17149
+84649,17149
+84649,18127
+85370,18127
+85370,18643
+86622,18643
+86622,20020
+86865,20020
+86865,20596
+88088,20596
+88088,21675
+88679,21675
+88679,22366
+89813,22366
+89813,23541
+90260,23541
+90260,24749
+90628,24749
+90628,25456
+91819,25456
+91819,26732
+92050,26732
+92050,28046
+92161,28046
+92161,28942
+93071,28942
+93071,29903
+93890,29903
+93890,31271
+93800,31271
+93800,32192
+94750,32192
+94750,33365
+95096,33365
+95096,34652
+95093,34652
+95093,35592
+96132,35592
+96132,36728
+96614,36728
+96614,38075
+96306,38075
+96306,39175
+96925,39175
+96925,40456
+96747,40456
+96747,41561
+97441,41561
+97441,42809
+97351,42809
+97351,43972
+97828,43972
+97828,45251
+97307,45251
+97307,46452
+97410,46452
+97410,47636
+97849,47636
+97849,48854
+97658,48854
+97658,50062`;
+
+        const coordinates = inputData.trim().split('\n').map(line => {
+            const [x, y] = line.split(',').map(Number);
+            return { x, y };
+        });
+
+        // Calculate bounds
+        const minX = Math.min(...coordinates.map(c => c.x));
+        const maxX = Math.max(...coordinates.map(c => c.x));
+        const minY = Math.min(...coordinates.map(c => c.y));
+        const maxY = Math.max(...coordinates.map(c => c.y));
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        // Update stats
+        document.getElementById('verticesCount').textContent = coordinates.length;
+        document.getElementById('edgesCount').textContent = coordinates.length;
+        document.getElementById('boundsWidth').textContent = width.toLocaleString();
+        document.getElementById('boundsHeight').textContent = height.toLocaleString();
+
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let zoom = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let lineWidth = 2;
+        let showFill = true;
+        let showGrid = false;
+        let showPoints = true;
+        let showRect = true;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate scale to fit polygon in canvas
+            const padding = 50;
+            const scaleX = (canvas.width - padding * 2) / width;
+            const scaleY = (canvas.height - padding * 2) / height;
+            const baseScale = Math.min(scaleX, scaleY);
+            const scale = baseScale * zoom;
+
+            // Center the polygon
+            const centerX = canvas.width / 2 + offsetX;
+            const centerY = canvas.height / 2 + offsetY;
+            const polygonCenterX = (minX + maxX) / 2;
+            const polygonCenterY = (minY + maxY) / 2;
+
+            // Transform function
+            function transform(x, y) {
+                const tx = centerX + (x - polygonCenterX) * scale;
+                const ty = centerY + (y - polygonCenterY) * scale;
+                return { x: tx, y: ty };
+            }
+
+            // Draw grid
+            if (showGrid) {
+                ctx.strokeStyle = '#f0f0f0';
+                ctx.lineWidth = 1;
+                const gridSize = 10000;
+                for (let x = Math.floor(minX / gridSize) * gridSize; x <= maxX; x += gridSize) {
+                    const start = transform(x, minY);
+                    const end = transform(x, maxY);
+                    ctx.beginPath();
+                    ctx.moveTo(start.x, start.y);
+                    ctx.lineTo(end.x, end.y);
+                    ctx.stroke();
+                }
+                for (let y = Math.floor(minY / gridSize) * gridSize; y <= maxY; y += gridSize) {
+                    const start = transform(minX, y);
+                    const end = transform(maxX, y);
+                    ctx.beginPath();
+                    ctx.moveTo(start.x, start.y);
+                    ctx.lineTo(end.x, end.y);
+                    ctx.stroke();
+                }
+            }
+
+            // Draw polygon fill
+            if (showFill) {
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                ctx.beginPath();
+                coordinates.forEach((coord, i) => {
+                    const pos = transform(coord.x, coord.y);
+                    if (i === 0) {
+                        ctx.moveTo(pos.x, pos.y);
+                    } else {
+                        ctx.lineTo(pos.x, pos.y);
+                    }
+                });
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Draw the specified rectangle area
+            if (showRect) {
+                const rect1 = { x: 5578, y: 67676 };
+                const rect2 = { x: 94876, y: 50058 };
+                const rectMinX = Math.min(rect1.x, rect2.x);
+                const rectMaxX = Math.max(rect1.x, rect2.x);
+                const rectMinY = Math.min(rect1.y, rect2.y);
+                const rectMaxY = Math.max(rect1.y, rect2.y);
+
+                const rectTopLeft = transform(rectMinX, rectMinY);
+                const rectBottomRight = transform(rectMaxX, rectMaxY);
+
+                // Draw rectangle fill
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+                ctx.fillRect(
+                    rectTopLeft.x,
+                    rectTopLeft.y,
+                    rectBottomRight.x - rectTopLeft.x,
+                    rectBottomRight.y - rectTopLeft.y
+                );
+
+                // Draw rectangle border
+                ctx.strokeStyle = 'rgba(255, 165, 0, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 5]);
+                ctx.strokeRect(
+                    rectTopLeft.x,
+                    rectTopLeft.y,
+                    rectBottomRight.x - rectTopLeft.x,
+                    rectBottomRight.y - rectTopLeft.y
+                );
+                ctx.setLineDash([]);
+
+                // Draw corner points
+                ctx.fillStyle = 'orange';
+                [rect1, rect2].forEach(corner => {
+                    const pos = transform(corner.x, corner.y);
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+
+                // Draw rectangle label
+                const rectCenterX = (rectTopLeft.x + rectBottomRight.x) / 2;
+                const rectCenterY = (rectTopLeft.y + rectBottomRight.y) / 2;
+                ctx.fillStyle = 'orange';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 4;
+                const rectWidth = rectMaxX - rectMinX + 1;
+                const rectHeight = rectMaxY - rectMinY + 1;
+                const rectArea = rectWidth * rectHeight;
+                const label = `Area: ${rectArea.toLocaleString()}`;
+                //ctx.strokeText(label, rectCenterX, rectCenterY);
+                //ctx.fillText(label, rectCenterX, rectCenterY);
+                ctx.font = 'bold 12px sans-serif';
+                const dimensions = `${rectWidth.toLocaleString()} × ${rectHeight.toLocaleString()}`;
+                //ctx.strokeText(dimensions, rectCenterX, rectCenterY + 20);
+                //ctx.fillText(dimensions, rectCenterX, rectCenterY + 20);
+            }
+
+            // Helper function to get color from red to green
+            function getGradientColor(ratio) {
+                // ratio from 0 (red) to 1 (green)
+                const r = Math.round(255 * (1 - ratio));
+                const g = Math.round(255 * ratio);
+                const b = 0;
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+
+            // Draw polygon outline with gradient colors
+            ctx.lineWidth = lineWidth;
+            ctx.lineJoin = 'miter';
+            ctx.lineCap = 'square';
+
+            // Draw each segment with its own color
+            for (let i = 0; i < coordinates.length; i++) {
+                const start = coordinates[i];
+                const end = coordinates[(i + 1) % coordinates.length];
+                const startPos = transform(start.x, start.y);
+                const endPos = transform(end.x, end.y);
+
+                const ratio = i / (coordinates.length - 1);
+                ctx.strokeStyle = getGradientColor(ratio);
+
+                ctx.beginPath();
+                ctx.moveTo(startPos.x, startPos.y);
+                ctx.lineTo(endPos.x, endPos.y);
+                ctx.stroke();
+            }
+
+            // Draw vertices with gradient colors
+            if (showPoints) {
+                coordinates.forEach((coord, i) => {
+                    const pos = transform(coord.x, coord.y);
+                    const ratio = i / (coordinates.length - 1);
+                    ctx.fillStyle = getGradientColor(ratio);
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, Math.max(3, lineWidth), 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Add white border for visibility
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            }
+
+            // Draw start and end point markers
+            const startPos = transform(coordinates[0].x, coordinates[0].y);
+            ctx.fillStyle = 'red';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.strokeText('START', startPos.x, startPos.y - 10);
+            ctx.fillText('START', startPos.x, startPos.y - 10);
+
+            const endPos = transform(coordinates[coordinates.length - 1].x, coordinates[coordinates.length - 1].y);
+            ctx.fillStyle = 'green';
+            //ctx.strokeText('END', endPos.x, endPos.y - 10);
+            //ctx.fillText('END', endPos.x, endPos.y - 10);
+        }
+
+        // Event listeners
+        document.getElementById('zoom').addEventListener('input', (e) => {
+            zoom = parseFloat(e.target.value);
+            document.getElementById('zoomValue').textContent = zoom.toFixed(1) + 'x';
+            draw();
+        });
+
+        document.getElementById('lineWidth').addEventListener('input', (e) => {
+            lineWidth = parseInt(e.target.value);
+            document.getElementById('lineWidthValue').textContent = lineWidth;
+            draw();
+        });
+
+        document.getElementById('resetView').addEventListener('click', () => {
+            zoom = 1;
+            offsetX = 0;
+            offsetY = 0;
+            document.getElementById('zoom').value = 1;
+            document.getElementById('zoomValue').textContent = '1.0x';
+            draw();
+        });
+
+        document.getElementById('toggleFill').addEventListener('click', () => {
+            showFill = !showFill;
+            draw();
+        });
+
+        document.getElementById('toggleGrid').addEventListener('click', () => {
+            showGrid = !showGrid;
+            draw();
+        });
+
+        document.getElementById('togglePoints').addEventListener('click', () => {
+            showPoints = !showPoints;
+            draw();
+        });
+
+        document.getElementById('toggleRect').addEventListener('click', () => {
+            showRect = !showRect;
+            draw();
+        });
+
+        // Mouse drag to pan
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const dx = e.clientX - lastMouseX;
+                const dy = e.clientY - lastMouseY;
+                offsetX += dx;
+                offsetY += dy;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
+        // Mouse wheel to zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            zoom = Math.max(0.1, Math.min(3, zoom * delta));
+            document.getElementById('zoom').value = zoom;
+            document.getElementById('zoomValue').textContent = zoom.toFixed(1) + 'x';
+            draw();
+        });
+
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>
